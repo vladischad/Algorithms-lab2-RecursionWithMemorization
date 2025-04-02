@@ -1,0 +1,5 @@
+t(i, j) =
+    true if i = 0 and j = 0
+    b(X[i-1], Z[i+j-1]) and t(i-1, j) if i > 0 and j == 0
+    b(Y[j-1], Z[i+j-1]) and t(i, j-1) if i == 0 and j > 0
+    (b(X[i-1], Z[i+j-1]) and t(i-1, j)) or (b(Y[j-1], Z[i+j-1]) and t(i, j-1)) if i > 0 and j > 0
