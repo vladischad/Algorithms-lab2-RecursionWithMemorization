@@ -1,9 +1,15 @@
+/**
+ * ShuffleRM.java
+ * Determines if Z is a shuffle of X and Y using top-down recursion with memoization.
+ * Author: Vladyslav (Vlad) Maliutin
+ */
+
 import java.io.*;
 
 public class ShuffleRM {
-    static Boolean[][] memo;
+    static int[][] memo;
     static String X, Y, Z;
-    static int refs = 0;
+    static int tableRefs = 0;
 
     public static void main(String[] args) throws IOException {
         if (args.length < 3 || args.length > 4) {
@@ -11,42 +17,72 @@ public class ShuffleRM {
             return;
         }
 
-        X = args[0]; Y = args[1]; Z = args[2];
-        int debug = args.length == 4 ? Integer.parseInt(args[3]) : 0;
+        X = args[0];
+        Y = args[1];
+        Z = args[2];
+        int debug = (args.length == 4) ? Integer.parseInt(args[3]) : 0;
 
         if (X.length() + Y.length() != Z.length()) {
-            System.out.println("Incompatible input lengths.");
+            System.out.println("Usage: java ShuffleRM <X> <Y> <Z> [<debug level>]");
             return;
         }
 
-        memo = new Boolean[X.length() + 1][Y.length() + 1];
-        boolean result = shuffle(X.length(), Y.length());
+        int m = X.length();
+        int n = Y.length();
+        memo = new int[m + 1][n + 1];
+        for (int i = 0; i <= m; i++)
+            for (int j = 0; j <= n; j++)
+                memo[i][j] = -1;
 
-        System.out.println(result ? "yes" : "no");
-        System.out.println("Table references: " + refs);
+        boolean result = isShuffle(m, n);
 
         if (debug == 1) {
             try (PrintWriter out = new PrintWriter("ShuffleRM-Table")) {
-                for (int i = 0; i <= X.length(); i++) {
-                    for (int j = 0; j <= Y.length(); j++) {
-                        if (memo[i][j] == null) out.print("-1 ");
-                        else out.print((memo[i][j] ? 1 : 0) + " ");
+                for (int i = 0; i <= m; i++) {
+                    for (int j = 0; j <= n; j++) {
+                        out.print((memo[i][j]) + (j == n ? "\n" : "  "));
                     }
-                    out.println();
                 }
             }
         }
+
+        if (debug == 1) {
+            for (int i = 0; i <= m; i++) {
+                for (int j = 0; j <= n; j++) {
+                    System.out.print(String.format("%2d", memo[i][j]) + (j == n ? "\n" : "  "));
+                }
+            }
+        }
+    
+
+        System.out.println(result ? "yes" : "no");
+        System.out.println("Number of table references: " + tableRefs);
     }
 
-    static boolean shuffle(int i, int j) {
-        refs++;
-        if (i == 0 && j == 0) return true;
-        if (memo[i][j] != null) return memo[i][j];
+    // Top-down recursive method with memoization
+    public static boolean isShuffle(int i, int j) {
+        tableRefs++;
 
-        boolean res = false;
-        if (i > 0 && X.charAt(i - 1) == Z.charAt(i + j - 1)) res |= shuffle(i - 1, j);
-        if (j > 0 && Y.charAt(j - 1) == Z.charAt(i + j - 1)) res |= shuffle(i, j - 1);
+        if (memo[i][j] != -1) {
+            return memo[i][j] == 1;
+        }
 
-        return memo[i][j] = res;
+        if (i == 0 && j == 0) {
+            memo[i][j] = 1;
+            return true;
+        }
+
+        int k = i + j - 1;
+        boolean valid = false;
+
+        if (i > 0 && X.charAt(i - 1) == Z.charAt(k) && isShuffle(i - 1, j)) {
+            valid = true;
+        }
+        if (!valid && j > 0 && Y.charAt(j - 1) == Z.charAt(k) && isShuffle(i, j - 1)) {
+            valid = true;
+        }
+
+        memo[i][j] = valid ? 1 : 0;
+        return valid;
     }
 }

@@ -1,4 +1,12 @@
+/**
+ * KnapsackDP.java
+ * Solves the 0-1 Knapsack problem using bottom-up dynamic programming.
+ * Prints value and decision tables to the console when debug = 1.
+ * Author: Vladyslav (Vlad) Maliutin
+ */
+
 import java.io.*;
+import java.util.*;
 
 public class KnapsackDP {
     public static void main(String[] args) throws IOException {
@@ -9,59 +17,95 @@ public class KnapsackDP {
 
         int n = Integer.parseInt(args[0]);
         int W = Integer.parseInt(args[1]);
-        int[] weights = readFile(args[2], n);
-        int[] values = readFile(args[3], n);
-        int debug = args.length == 5 ? Integer.parseInt(args[4]) : 0;
+        String wFile = args[2];
+        String vFile = args[3];
+        int debug = (args.length == 5) ? Integer.parseInt(args[4]) : 0;
 
-        int[][] dp = new int[n + 1][W + 1];
-        int[][] decision = new int[n + 1][W + 1];
-        int refs = 0;
+        int[] weights = readFile(wFile, n);
+        int[] values = readFile(vFile, n);
 
+        int[][] V = new int[n + 1][W + 1];
+        int[][] D = new int[n + 1][W + 1];
+        int tableRefs = 0;
+
+        // DP table construction
         for (int i = 1; i <= n; i++) {
             for (int w = 0; w <= W; w++) {
+                tableRefs++;
                 if (weights[i - 1] <= w) {
-                    int include = values[i - 1] + dp[i - 1][w - weights[i - 1]];
-                    int exclude = dp[i - 1][w];
+                    int include = values[i - 1] + V[i - 1][w - weights[i - 1]];
+                    int exclude = V[i - 1][w];
                     if (include > exclude) {
-                        dp[i][w] = include;
-                        decision[i][w] = 1;
+                        V[i][w] = include;
+                        D[i][w] = 1;
                     } else {
-                        dp[i][w] = exclude;
+                        V[i][w] = exclude;
+                        D[i][w] = 0;
                     }
                 } else {
-                    dp[i][w] = dp[i - 1][w];
+                    V[i][w] = V[i - 1][w];
+                    D[i][w] = 0;
                 }
-                refs++;
             }
         }
 
-        System.out.println("Optimal value: " + dp[n][W]);
-        System.out.println("Table references: " + refs);
-
+        // If debug level 1, print the tables
         if (debug == 1) {
-            writeTable("KnapsackDP-VTable", dp);
-            writeTable("KnapsackDP-DTable", decision);
+            System.out.println("KnapsackDP-VTable:");
+            printTable(V);
+            System.out.println("\nKnapsackDP-DTable:");
+            printTable(D);
         }
+
+        // Reconstruct optimal solution
+        List<Integer> solution = new ArrayList<>();
+        int w = W;
+        for (int i = n; i > 0; i--) {
+            if (D[i][w] == 1) {
+                solution.add(i);
+                w -= weights[i - 1];
+            }
+        }
+
+        Collections.sort(solution);
+        int totalValue = V[n][W];
+        int totalWeight = 0;
+        for (int idx : solution) {
+            totalWeight += weights[idx - 1];
+        }
+
+        // Print results
+        System.out.println("\nOptimal solution:");
+        System.out.println(solution);
+        System.out.println("Total Weight: " + totalWeight);
+        System.out.println("Optimal Value: " + totalValue);
+        System.out.println("Number of table references: " + tableRefs);
     }
 
+    // Helper to read a file of n integers
     private static int[] readFile(String filename, int n) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(filename));
         int[] arr = new int[n];
-        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-            for (int i = 0; i < n; i++) {
-                arr[i] = Integer.parseInt(br.readLine().trim());
-            }
+        for (int i = 0; i < n; i++) {
+            arr[i] = Integer.parseInt(br.readLine());
         }
         return arr;
     }
 
-    private static void writeTable(String filename, int[][] table) throws IOException {
-        try (PrintWriter out = new PrintWriter(filename)) {
-            for (int[] row : table) {
-                for (int val : row) {
-                    out.print(val + " ");
+    // Helper to print table with aligned spacing
+    private static void printTable(int[][] table) {
+        for (int i = 1; i < table.length; i++) { // start from 1, skip first row
+            for (int j = 1; j < table[i].length; j++) {
+                int val = table[i][j];
+                if (val < 10) {
+                    System.out.print(val + "   "); // 3 spaces
+                } else if (val < 100) {
+                    System.out.print(val + "  ");  // 2 spaces
+                } else {
+                    System.out.print(val + " ");   // 1 space
                 }
-                out.println();
             }
+            System.out.println();
         }
     }
 }
